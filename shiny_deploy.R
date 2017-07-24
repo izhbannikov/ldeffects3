@@ -1,6 +1,4 @@
 # A simple script to deploy on shinyapps:
-library(devtools)
-devtools::install_github("rstudio/shinyapps")
 library(rsconnect)
-rsconnect::setAccountInfo(name='ilmadester',token='1D5950B47F9FFD38E2ED2609985BAF8A',secret='fbL28KfBVVOGAG2NNR6kFpUW6gIcKlZZ04Fxpmnx')
-rsconnect::deployApp("~/Projects/ldeffects3/", account="ilmadester")
+rsconnect::setAccountInfo(name='iz12', token='A3B758D61D31FBC69393B0B90B633796', secret='vWrjX8HBTk2cE0soU7G8tw4GWbFw5MnYkDj2vGhq')
+rsconnect::deployApp("~/Projects/ldeffects3/", account="iz12")
