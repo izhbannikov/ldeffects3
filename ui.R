@@ -30,6 +30,10 @@ shinyUI(fluidPage(
              sliderInput("gamma110", "gamma11(0):", min = 0, max = 0.1, value = 0.05),
              sliderInput("gamma120", "gamma12(0):", min = 0, max = 0.1, value = 0.005),
              sliderInput("gamma220", "gamma22(0):", min = 0, max = 0.1, value = 0.05)
+           ),
+           wellPanel(
+             h4("Time for 3D plot"),
+             sliderInput("t3d","t:", min = 1,max = 120,value = 1, step=1)
            )
     ),
     
@@ -37,7 +41,9 @@ shinyUI(fluidPage(
     mainPanel(
       tabsetPanel(
         tabPanel("Main Plots", 
-                 plotOutput("distPlot",height = 1024))
+                 plotOutput("distPlot",height = 1024)),
+        tabPanel("3D Plots", 
+                 plotOutput("distPlot3d",height = 1024))
       )
       
     )
