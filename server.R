@@ -45,6 +45,16 @@ shinyServer(function(input, output, session) {
       {
           updateSliderInput(session, "gamma120", value=maxval)
       }
+      
+      if(input$t3d > input$time[2])
+      {
+        updateSliderInput(session, "t3d", value=input$time[2])
+      }
+      
+      if(input$t3d < input$time[1])
+      {
+        updateSliderInput(session, "t3d", value=input$time[1])
+      }
     
       yini <- c(y1 = input$m10, y2 = input$m20, y3 = input$gamma110, y4 = input$gamma120, y5 = input$gamma220)
       res <- ode(y = yini, func = func,
@@ -63,11 +73,14 @@ shinyServer(function(input, output, session) {
       Sigma <- matrix(c(res[t,4], res[t,5], 
                         res[t,5], res[t,6]), 2)
       
-      rho <- 0
+      
       mu_x <- mu[1]
       mu_y <- mu[2]
       sigma_x <- (Sigma[1,1])^0.5
       sigma_y <- (Sigma[2,2])^0.5
+      sigma_xy <- Sigma[1,2]
+      
+      rho <- Sigma[1,2]/(sigma_x*sigma_y)
       
       xx <- seq(-3,3,length.out = 100)
       yy <- seq(-3,3,length.out = 100)
@@ -80,7 +93,7 @@ shinyServer(function(input, output, session) {
           {
               x <- xx[i]
               y <- yy[j]
-              fxy <- 1/(2*pi*sigma_x*sigma_y*(1-rho^2)^0.5)*exp((-1/2)*((x - mu_x)^2/sigma_x^2 + (y - mu_y)^2/sigma_y^2))
+              fxy <- 1/(2*pi*sigma_x*sigma_y*(1-rho^2)^0.5)*exp((-1/2)*((x - mu_x)^2/sigma_x^2 + (y - mu_y)^2/sigma_y^2 - 2*rho*(x - mu_x)*(y - mu_y)/(sigma_x*sigma_y)))
               z[i,j] <- fxy
           }
       }
