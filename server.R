@@ -104,7 +104,7 @@ shinyServer(function(input, output, session) {
   
   PlotMain <- function(cols=1, save=F){
     res <- data()
-    plot(res$res)
+    plot(res$res, cex.axis=1.5, cex.main=2, cex.lab=1.5, col="red", lwd=2)
   }
   
   PlotDensity <- function(cols=1, save=F){
@@ -116,7 +116,7 @@ shinyServer(function(input, output, session) {
   
   PlotContour <- function(cols=1, save=F){
     res <- data()
-    contour(z=res$z)
+    contour(z=res$z, col="red", labcex=1, lwd=2)
   }
   
   

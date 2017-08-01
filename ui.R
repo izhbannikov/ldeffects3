@@ -8,7 +8,7 @@ shinyUI(fluidPage(
     column(4,
            wellPanel(
              sliderInput("time", "Aage range", min = 1, max = 120, value = c(30,105)),
-             sliderInput("t3d","Age", min = 1,max = 120,value = 60, step=1)
+             sliderInput("t3d","Age", min = 1,max = 120,value = 60, step=0.01)
            ),
            wellPanel(
              h4("Constants"),
@@ -23,7 +23,7 @@ shinyUI(fluidPage(
              sliderInput("m10","m1(0):", min = 0,max = 5,value = 0, step=1e-4),
              sliderInput("m20", "m2(0):", min = 0, max = 5, value = 0, step=1e-4),
              sliderInput("gamma110", "gamma11(0):", min = 0, max = 2, value = 0.5, step=1e-4),
-             sliderInput("gamma120", "gamma12(0):", min = 0, max = 2, value = 0.1, step=1e-4),
+             sliderInput("gamma120", "gamma12(0):", min = -2, max = 2, value = 0.1, step=1e-4),
              sliderInput("gamma220", "gamma22(0):", min = 0, max = 2, value = 0.5, step=1e-4)
            )
            
