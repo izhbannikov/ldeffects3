@@ -3,10 +3,20 @@ library(grid)
 library(extrafont)
 library(deSolve)
 library(MASS)
+library(ggplot2)
 source("multiplot.R")
+
 
 # Define server logic #
 shinyServer(function(input, output, session) {
+  
+  getPlotTitle <- function()
+  {
+    paste("Q11=",input$Q11, "Q12 =",input$Q12, "Q22 =",input$Q22, "g01 =",input$g01, "g02 =", input$g02, "\n",
+                "gamma11(0) =", input$gamma110, "gamma12(0) =", input$gamma120, "gamma22(0) =", input$gamma220, "\n",
+                "m1(0) =", input$m10, "m2(0) =",input$m20)
+  }
+  
   
   func <- function(t, y, parms) 
   {
@@ -40,10 +50,10 @@ shinyServer(function(input, output, session) {
   
   data <- reactive({
       
-      maxval <- max(c(input$gamma110, input$gamma220))
-      if(input$gamma120 > maxval)
+      gamma.lim <- sqrt(input$gamma110*input$gamma220) #max(c(input$gamma110, input$gamma220))
+      if(abs(input$gamma120) > gamma.lim)
       {
-          updateSliderInput(session, "gamma120", value=maxval)
+          updateSliderInput(session, "gamma120", value=gamma.lim)
       }
       
       if(input$t3d > input$time[2])
@@ -55,6 +65,13 @@ shinyServer(function(input, output, session) {
       {
         updateSliderInput(session, "t3d", value=input$time[1])
       }
+      
+      q.lim <- sqrt(input$Q11*input$Q22) #max(c(input$gamma110, input$gamma220))
+      if(abs(input$Q12) > q.lim)
+      {
+        updateSliderInput(session, "Q12", value=q.lim)
+      }
+      
     
       yini <- c(y1 = input$m10, y2 = input$m20, y3 = input$gamma110, y4 = input$gamma120, y5 = input$gamma220)
       res <- ode(y = yini, func = func,
@@ -102,41 +119,55 @@ shinyServer(function(input, output, session) {
       
   })
   
-  PlotMain <- function(cols=1, save=F){
+  PlotMain <- function(print.title=TRUE)
+  {
     res <- data()
-    plot(res$res, cex.axis=1.5, cex.main=2, cex.lab=1.5, col="red", lwd=2)
+    if(print.title)
+    {
+        par(oma=c(1, 1, 5, 1))
+        plot(res$res, cex.axis=1.5, cex.main=2, cex.lab=1.5, col="red", lwd=2)
+        mtext(getPlotTitle(), side = 3, line = 0, outer = TRUE)
+    }
+    else 
+    {
+        plot(res$res, cex.axis=1.5, cex.main=2, cex.lab=1.5, col="red", lwd=2)
+    }
   }
   
-  PlotDensity <- function(cols=1, save=F){
+  PlotDensity <- function(print.title=TRUE){
     res <- data()
     persp(z=res$z, phi = 45, theta = 30, ticktype="detailed",
           xlab="x", ylab="y", zlab="z", axes=T)
+    if(print.title)
+        mtext(getPlotTitle(), side = 3, line = -4, outer = TRUE)
   }
 
   
-  PlotContour <- function(cols=1, save=F){
+  PlotContour <- function(print.title=TRUE){
     res <- data()
     contour(z=res$z, col="red", labcex=1, lwd=2)
+    if(print.title)
+        mtext(getPlotTitle(), side = 3, line = -4, outer = TRUE)
   }
   
   
   output$distPlot <- renderPlot({
-    print(PlotMain())
+    print(PlotMain(input$main.title))
   })
   
   output$distPlot3d <- renderPlot({
-    print(PlotDensity())
+    print(PlotDensity(input$dist.title))
   })
   
   output$countourPlot <- renderPlot({
-      print(PlotContour())
+      print(PlotContour(input$contour.title))
   })
   
   output$savePlotMain <- downloadHandler(
     filename = "plotMain.png",
     content = function(file) {
       png(file, width = 1024, height = 1024)
-      print(PlotMain())
+      print(PlotMain(input$main.title))
       dev.off()
     }
   ) 
@@ -145,7 +176,7 @@ shinyServer(function(input, output, session) {
     filename = "plotDensity.png",
     content = function(file) {
       png(file, width = 1024, height = 1024)
-      print(PlotDensity())
+      print(PlotDensity(input$dist.title))
       dev.off()
     }
   )  
@@ -154,7 +185,7 @@ shinyServer(function(input, output, session) {
     filename = "plotContour.png",
     content = function(file) {
       png(file, width = 1024, height = 1024)
-      print(PlotContour())
+      print(PlotContour(input$contour.title))
       dev.off()
     }
   )   
