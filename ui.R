@@ -26,6 +26,16 @@ shinyUI(fluidPage(
              sliderInput("gamma110", "gamma11(0):", min = 0, max = 2, value = 0.5, step=1e-3),
              sliderInput("gamma120", "gamma12(0):", min = -2, max = 2, value = 0.1, step=1e-3),
              sliderInput("gamma220", "gamma22(0):", min = 0, max = 2, value = 0.5, step=1e-3)
+           ),
+           wellPanel(
+             h4("mu0 = a*exp(b*t)"),
+             sliderInput("a_mu0","a:", min = 0,max = 1,value = 0.3, step=1e-3),
+             sliderInput("b_mu0", "b:", min = 0, max = 1, value = 0.01, step=1e-3)
+           ),
+           wellPanel(
+             h4("Q01/02"),
+             sliderInput("Q01", "Q01:", min = 0, max = 2, value = 0.5e-1, step=1e-3),
+             sliderInput("Q02", "Q02:", min = 0, max = 2, value = 0.5e-1, step=1e-3)
            )
            
     ),
@@ -34,15 +44,19 @@ shinyUI(fluidPage(
     mainPanel(
       tabsetPanel(
         tabPanel("Main Plots", 
-                 plotOutput("distPlot",height = 1024),
+                 plotOutput("distPlot",height = 1024, width = 1024),
                  downloadButton("savePlotMain", label="Save"),
                  checkboxInput("main.title", "Title", TRUE)),
         tabPanel("Contour plot", 
-                 plotOutput("countourPlot", height = 1024),
+                 plotOutput("countourPlot", height = 1024, width = 1024),
                  downloadButton("savePlotContour", label="Save"),
                  checkboxInput("contour.title", "Title", TRUE)),
+        tabPanel("Mortality and survival", 
+                 plotOutput("mortSurvPlot", height = 1024, width = 1024),
+                 downloadButton("savePlotMortSurv", label="Save"),
+                 checkboxInput("mortsurv.title", "Title", TRUE)),
         tabPanel("3D density plot", 
-                 plotOutput("distPlot3d",height = 1024),
+                 plotOutput("distPlot3d",height = 1024, width = 1024),
                  downloadButton("savePlotDensity", label="Save"),
                  checkboxInput("dist.title", "Title", TRUE))
       )

@@ -72,11 +72,23 @@ shinyServer(function(input, output, session) {
         updateSliderInput(session, "Q12", value=q.lim)
       }
       
-    
-      yini <- c(y1 = input$m10, y2 = input$m20, y3 = input$gamma110, y4 = input$gamma120, y5 = input$gamma220)
+      g01 <- input$g01
+      g02 <- input$g02 
+      Q01 <- input$Q01
+      Q02 <- input$Q02
+      Q11 <- input$Q11
+      Q12 <- input$Q12
+      Q22 <- input$Q22
+      m10 <- input$m10
+      m20 <- input$m20
+      gamma110 <- input$gamma110
+      gamma120 <- input$gamma120
+      gamma220 <- input$gamma220
+      
+      yini <- c(y1 = m10, y2 = m20, y3 = gamma110, y4 = gamma120, y5 = gamma220)
       res <- ode(y = yini, func = func,
-               times = input$time[1]:input$time[2], parms = c(input$Q11, input$Q12, input$Q22, 
-                                                              input$g01, input$g02))
+               times = input$time[1]:input$time[2], 
+               parms = c(Q11, Q12, Q22, g01, g02))
     
       colnames(res) <- c("time", "m1", "m2", "gamma11", "gamma12", "gamma22")
       
@@ -115,7 +127,17 @@ shinyServer(function(input, output, session) {
           }
       }
       
-      list(x=x,y=y,z=z,res=res)
+      m1 <- res[,2]
+      m2 <- res[,3]
+      gamma11 <- res[,4] 
+      gamma12 <- res[,5]
+      gamma22 <- res[,6]
+      mu0 <- input$a_mu0*exp(input$b_mu0*c(input$time[1]:input$time[2]))
+      mut <- mu0 + Q01*(m1 - g01) + Q02*(m2 - g02) + Q11*(m1 - g01)^2 + 2*Q12*(m1 - g01)*(m2 - g02) + Q22*(m2 - g02)^2 + Q11*gamma11 + 2*Q12*gamma12 + Q22*gamma22
+      logmut <- log(mut)
+      survt <- exp(-1*mut)
+      
+      list(x=xx,y=yy,z=z,res=res, mut=mut, logmut=logmut, survt=survt, sigma_x=sigma_x, sigma_y=sigma_y)
       
   })
   
@@ -136,7 +158,7 @@ shinyServer(function(input, output, session) {
   
   PlotDensity <- function(print.title=TRUE){
     res <- data()
-    persp(z=res$z, phi = 45, theta = 30, ticktype="detailed",
+    persp(x=res$x, y=res$y, z=res$z, phi = 45, theta = 30, ticktype="detailed",
           xlab="x", ylab="y", zlab="z", axes=T)
     if(print.title)
         mtext(getPlotTitle(), side = 3, line = -4, outer = TRUE)
@@ -145,9 +167,59 @@ shinyServer(function(input, output, session) {
   
   PlotContour <- function(print.title=TRUE){
     res <- data()
-    contour(z=res$z, col="red", labcex=1, lwd=2)
+    x <- res$x
+    y <- res$y
+    xmin <- min(x)
+    xmax <- max(x)
+    ymin <- min(y)
+    ymax <- max(y)
+    for(i in 1:dim(res$z)[1])
+    {
+        if(max(res$z[i,]) >= 1e-3)
+        {
+            xmin <- i
+            break
+        }
+    }
+    for(i in dim(res$z)[1]:1)
+    {
+      if(max(res$z[i,]) >= 1e-3)
+      {
+        xmax <- i
+        break
+      }
+    }
+    
+    for(i in 1:dim(res$z)[2])
+    {
+      if(max(res$z[,i]) >= 1e-3)
+      {
+        ymin <- i
+        break
+      }
+    }
+    for(i in dim(res$z)[2]:1)
+    {
+      if(max(res$z[,i]) >= 1e-3)
+      {
+        ymax <- i
+        break
+      }
+    }
+    
+    contour(x=x[xmin:xmax], y=y[ymin:ymax], z=res$z[xmin:xmax,ymin:ymax], col="red", labcex=1, lwd=2)
+    
     if(print.title)
         mtext(getPlotTitle(), side = 3, line = -4, outer = TRUE)
+  }
+  
+  PlotMortSurv <- function(print.title=TRUE){
+    res <- data()
+    par(mfrow=c(2,1))
+    plot(res$logmut, cex.axis=1.5, cex.main=2, cex.lab=1.5, col="red", lwd=2, xlab="t", ylab="ln(mu)", type="l")
+    plot(res$surv, cex.axis=1.5, cex.main=2, cex.lab=1.5, col="blue", lwd=2, xlab="t", ylab="S", type="l")
+    if(print.title)
+      mtext(getPlotTitle(), side = 3, line = -4, outer = TRUE)
   }
   
   
@@ -161,6 +233,10 @@ shinyServer(function(input, output, session) {
   
   output$countourPlot <- renderPlot({
       print(PlotContour(input$contour.title))
+  })
+  
+  output$mortSurvPlot <- renderPlot({
+    print(PlotMortSurv(input$mortsurv.title))
   })
   
   output$savePlotMain <- downloadHandler(
@@ -188,7 +264,16 @@ shinyServer(function(input, output, session) {
       print(PlotContour(input$contour.title))
       dev.off()
     }
-  )   
+  ) 
+  
+  output$savePlotMortSurv <- downloadHandler(
+    filename = "plotMortSurv.png",
+    content = function(file) {
+      png(file, width = 1024, height = 1024)
+      print(PlotMortSurv(input$mortsurv.title))
+      dev.off()
+    }
+  ) 
   
 
   
