@@ -252,7 +252,7 @@ shinyServer(function(input, output, session) {
   })
   
   output$savePlotMain <- downloadHandler(
-    filename = "plotMain.png",
+    filename = paste("plotMain_", format(Sys.time(), "%Y-%m-%dT%H:%M:%S"), ".png"),
     content = function(file) {
       png(file, width = 1024, height = 1024)
       print(PlotMain(input$main.title))
@@ -261,7 +261,7 @@ shinyServer(function(input, output, session) {
   ) 
   
   output$savePlotDensity <- downloadHandler(
-    filename = "plotDensity.png",
+    filename = paste("plotDensity_", format(Sys.time(), "%Y-%m-%dT%H:%M:%S"), ".png"),
     content = function(file) {
       png(file, width = 1024, height = 1024)
       print(PlotDensity(input$dist.title))
@@ -270,7 +270,7 @@ shinyServer(function(input, output, session) {
   )  
   
   output$savePlotContour <- downloadHandler(
-    filename = "plotContour.png",
+    filename = paste("plotContour", format(Sys.time(), "%Y-%m-%dT%H:%M:%S"), ".png"),
     content = function(file) {
       png(file, width = 1024, height = 1024)
       print(PlotContour(input$contour.title))
@@ -279,7 +279,7 @@ shinyServer(function(input, output, session) {
   ) 
   
   output$savePlotMortSurv <- downloadHandler(
-    filename = "plotMortSurv.png",
+    filename = paste("plotMortSurv", format(Sys.time(), "%Y-%m-%dT%H:%M:%S"), ".png"),
     content = function(file) {
       png(file, width = 1024, height = 1024)
       print(PlotMortSurv(input$mortsurv.title))
