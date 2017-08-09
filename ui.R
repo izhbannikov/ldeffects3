@@ -8,7 +8,7 @@ shinyUI(fluidPage(
   fluidRow(
     column(4,
            wellPanel(
-             sliderInput("time", "Aage range", min = 1, max = 120, value = c(30,105)),
+             sliderInput("time", "Aage range", min = 0, max = 120, value = c(30,105)),
              sliderInput("t3d","Age", min = 1,max = 120,value = 60, step=0.01)
            ),
            wellPanel(
@@ -29,7 +29,7 @@ shinyUI(fluidPage(
            ),
            wellPanel(
              h4("mu0 = a*exp(b*t)"),
-             sliderInput("a_mu0","a:", min = 0,max = 1,value = 0.3, step=1e-3),
+             sliderInput("a_mu0","a:", min = 0,max = 0.5,value = 0.1, step=1e-3),
              sliderInput("b_mu0", "b:", min = 0, max = 1, value = 0.01, step=1e-3)
            ),
            wellPanel(

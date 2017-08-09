@@ -4,6 +4,7 @@ library(extrafont)
 library(deSolve)
 library(MASS)
 library(ggplot2)
+library(pracma)
 source("multiplot.R")
 
 
@@ -12,9 +13,9 @@ shinyServer(function(input, output, session) {
   
   getPlotTitle <- function()
   {
-    paste("Q11=",input$Q11, "Q12 =",input$Q12, "Q22 =",input$Q22, "g01 =",input$g01, "g02 =", input$g02, "\n",
+    paste("Q11 =",input$Q11, "Q12 =",input$Q12, "Q22 =",input$Q22, "g01 =",input$g01, "g02 =", input$g02, "\n",
                 "gamma11(0) =", input$gamma110, "gamma12(0) =", input$gamma120, "gamma22(0) =", input$gamma220, "\n",
-                "m1(0) =", input$m10, "m2(0) =",input$m20)
+                "m1(0) =", input$m10, "m2(0) =",input$m20, "t1 = ", input$time[1], "t2 = ", input$time[2], "Age = ", input$t3d)
   }
   
   
@@ -132,10 +133,21 @@ shinyServer(function(input, output, session) {
       gamma11 <- res[,4] 
       gamma12 <- res[,5]
       gamma22 <- res[,6]
+      
       mu0 <- input$a_mu0*exp(input$b_mu0*c(input$time[1]:input$time[2]))
       mut <- mu0 + Q01*(m1 - g01) + Q02*(m2 - g02) + Q11*(m1 - g01)^2 + 2*Q12*(m1 - g01)*(m2 - g02) + Q22*(m2 - g02)^2 + Q11*gamma11 + 2*Q12*gamma12 + Q22*gamma22
       logmut <- log(mut)
-      survt <- exp(-1*mut)
+      survt <- c()
+      
+      t1 <- input$time[1]
+      t2 <- input$time[2]
+      for(i in t1:t2)
+      {
+          dt <- i-t1
+          #mu.auc <- c(mu.auc, trapz(times[i:length(times)], mut[i:length(times)]))
+          #mu.auc <- c(mu.auc, mut[i:(i+1)])
+          survt <- c(survt, exp(-1*mut[i-t1+1]*dt))
+      }
       
       list(x=xx,y=yy,z=z,res=res, mut=mut, logmut=logmut, survt=survt, sigma_x=sigma_x, sigma_y=sigma_y)
       
@@ -216,8 +228,8 @@ shinyServer(function(input, output, session) {
   PlotMortSurv <- function(print.title=TRUE){
     res <- data()
     par(mfrow=c(2,1))
-    plot(res$logmut, cex.axis=1.5, cex.main=2, cex.lab=1.5, col="red", lwd=2, xlab="t", ylab="ln(mu)", type="l")
-    plot(res$surv, cex.axis=1.5, cex.main=2, cex.lab=1.5, col="blue", lwd=2, xlab="t", ylab="S", type="l")
+    plot(x=input$time[1]:input$time[2], y=res$logmut, cex.axis=1.5, cex.main=2, cex.lab=1.5, col="red", lwd=2, xlab="t", ylab="ln(mu)", type="l")
+    plot(x=input$time[1]:input$time[2], y=res$surv, cex.axis=1.5, cex.main=2, cex.lab=1.5, col="blue", lwd=2, xlab="t", ylab="S", type="l")
     if(print.title)
       mtext(getPlotTitle(), side = 3, line = -4, outer = TRUE)
   }
