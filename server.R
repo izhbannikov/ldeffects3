@@ -7,7 +7,6 @@ library(ggplot2)
 library(pracma)
 source("multiplot.R")
 
-
 # Define server logic #
 shinyServer(function(input, output, session) {
   
@@ -144,8 +143,6 @@ shinyServer(function(input, output, session) {
       for(i in t1:t2)
       {
           dt <- i-t1
-          #mu.auc <- c(mu.auc, trapz(times[i:length(times)], mut[i:length(times)]))
-          #mu.auc <- c(mu.auc, mut[i:(i+1)])
           survt <- c(survt, exp(-1*mut[i-t1+1]*dt))
       }
       
@@ -195,31 +192,35 @@ shinyServer(function(input, output, session) {
     }
     for(i in dim(res$z)[1]:1)
     {
-      if(max(res$z[i,]) >= 1e-3)
-      {
-        xmax <- i
-        break
-      }
+        if(max(res$z[i,]) >= 1e-3)
+        {
+            xmax <- i
+            break
+        }
     }
     
     for(i in 1:dim(res$z)[2])
     {
-      if(max(res$z[,i]) >= 1e-3)
-      {
-        ymin <- i
-        break
-      }
+        if(max(res$z[,i]) >= 1e-3)
+        {
+            ymin <- i
+            break
+        }
     }
     for(i in dim(res$z)[2]:1)
     {
-      if(max(res$z[,i]) >= 1e-3)
-      {
-        ymax <- i
-        break
-      }
+        if(max(res$z[,i]) >= 1e-3)
+        {
+            ymax <- i
+            break
+        }
     }
     
+    ifelse(xmax > ymax, ymax<-xmax, xmax<-ymax)
+    ifelse(xmin < ymin, ymin<-xmin, xmin<-ymin)
+    
     contour(x=x[xmin:xmax], y=y[ymin:ymax], z=res$z[xmin:xmax,ymin:ymax], col="red", labcex=1, lwd=2)
+    
     
     if(print.title)
         mtext(getPlotTitle(), side = 3, line = -4, outer = TRUE)
@@ -252,16 +253,22 @@ shinyServer(function(input, output, session) {
   })
   
   output$savePlotMain <- downloadHandler(
-    filename = paste("plotMain_", format(Sys.time(), "%Y-%m-%dT%H:%M:%S"), ".png"),
+    filename = function()
+    {
+      paste("plotMain_", format(Sys.time(), "%Y-%m-%dT%H_%M_%S"), ".png", sep="")
+    },
     content = function(file) {
-      png(file, width = 1024, height = 1024)
+      png(file=file, width = 1024, height = 1024)
       print(PlotMain(input$main.title))
       dev.off()
     }
   ) 
   
   output$savePlotDensity <- downloadHandler(
-    filename = paste("plotDensity_", format(Sys.time(), "%Y-%m-%dT%H:%M:%S"), ".png"),
+    filename = function()
+    {
+      paste("plotDensity_", format(Sys.time(), "%Y-%m-%dT%H_%M_%S"), ".png", sep="")
+    },
     content = function(file) {
       png(file, width = 1024, height = 1024)
       print(PlotDensity(input$dist.title))
@@ -270,7 +277,10 @@ shinyServer(function(input, output, session) {
   )  
   
   output$savePlotContour <- downloadHandler(
-    filename = paste("plotContour", format(Sys.time(), "%Y-%m-%dT%H:%M:%S"), ".png"),
+    filename = function()
+    {
+      paste("plotContour_", format(Sys.time(), "%Y-%m-%dT%H_%M_%S"), ".png", sep="")
+    },
     content = function(file) {
       png(file, width = 1024, height = 1024)
       print(PlotContour(input$contour.title))
@@ -279,7 +289,10 @@ shinyServer(function(input, output, session) {
   ) 
   
   output$savePlotMortSurv <- downloadHandler(
-    filename = paste("plotMortSurv", format(Sys.time(), "%Y-%m-%dT%H:%M:%S"), ".png"),
+    filename = function()
+    {
+      paste("plotMortSurv_", format(Sys.time(), "%Y-%m-%dT%H_%M_%S"), ".png", sep="")
+    },
     content = function(file) {
       png(file, width = 1024, height = 1024)
       print(PlotMortSurv(input$mortsurv.title))
