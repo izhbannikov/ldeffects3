@@ -26,6 +26,8 @@ shinyServer(function(input, output, session) {
     Q22 <- parms[3]
     g01 <- parms[4]
     g02 <- parms[5]
+    Q01 <- parms[6]
+    Q02 <- parms[7]
     
     m1 <- y[1]
     m2 <- y[2]
@@ -35,10 +37,12 @@ shinyServer(function(input, output, session) {
     gamma22 <- y[5]
     
     list(c(
-      -2*( (gamma11*Q11 + gamma12*Q21)*(m1 - g01) +    #dm1/dt
-             (gamma11*Q12 + gamma12*Q22)*(m2 - g02) ), 
-      -2*( (gamma21*Q11 + gamma22*Q21)*(m1 - g01) +    #dm2/dt
-             (gamma21*Q12 + gamma22*Q22)*(m2 - g02) ), 
+      ifelse(input$linear.members == TRUE, -1*gamma11*Q01 - gamma12*Q02 - 2*( (gamma11*Q11 + gamma12*Q21)*(m1 - g01) +    #dm1/dt
+             (gamma11*Q12 + gamma12*Q22)*(m2 - g02) ), - 2*( (gamma11*Q11 + gamma12*Q21)*(m1 - g01) +    #dm1/dt
+                                                               (gamma11*Q12 + gamma12*Q22)*(m2 - g02) )), 
+      ifelse(input$linear.members == TRUE, -1*gamma21*Q01 - gamma22*Q02 - 2*( (gamma21*Q11 + gamma22*Q21)*(m1 - g01) +    #dm2/dt
+             (gamma21*Q12 + gamma22*Q22)*(m2 - g02) ), - 2*( (gamma21*Q11 + gamma22*Q21)*(m1 - g01) +    #dm2/dt
+                                                               (gamma21*Q12 + gamma22*Q22)*(m2 - g02) )), 
       -2*( gamma11*Q11*gamma11 + gamma12*Q21*gamma11 +   #dgamma11/dt
              gamma11*Q12*gamma21 + gamma12*Q22*gamma21 ),
       -2*( gamma11*Q11*gamma12 + gamma12*Q21*gamma12 +   #dgamma12/dt
@@ -88,7 +92,7 @@ shinyServer(function(input, output, session) {
       yini <- c(y1 = m10, y2 = m20, y3 = gamma110, y4 = gamma120, y5 = gamma220)
       res <- ode(y = yini, func = func,
                times = input$time[1]:input$time[2], 
-               parms = c(Q11, Q12, Q22, g01, g02))
+               parms = c(Q11, Q12, Q22, g01, g02, Q01, Q02))
     
       colnames(res) <- c("time", "m1", "m2", "gamma11", "gamma12", "gamma22")
       
@@ -103,6 +107,8 @@ shinyServer(function(input, output, session) {
                         res[t,5], res[t,6]), 2)
       
       
+      
+      
       mu_x <- mu[1]
       mu_y <- mu[2]
       sigma_x <- (Sigma[1,1])^0.5
@@ -111,11 +117,21 @@ shinyServer(function(input, output, session) {
       
       rho <- Sigma[1,2]/(sigma_x*sigma_y)
       
+      r2 <- c()
+      for(i in 1:dim(res)[1]) 
+      {
+          sigma.t <- matrix(c(res[i,4], res[i,5], 
+                          res[i,5], res[i,6]), 2)
+          sigma_x.t <- (sigma.t[1,1])^0.5
+          sigma_y.t <- (sigma.t[2,2])^0.5
+          sigma_xy.t <- sigma.t[1,2]
+          r2 <- c(r2, sigma.t[1,2]/(sigma_x.t*sigma_y.t))
+      }
+      
       xx <- seq(-3,3,length.out = 100)
       yy <- seq(-3,3,length.out = 100)
       
       z <- matrix(nrow=length(xx), ncol=length(yy), NA)
-      
       for(i in 1:length(xx))
       {
           for(j in 1:length(yy))
@@ -135,7 +151,9 @@ shinyServer(function(input, output, session) {
       
       mu0 <- input$a_mu0*exp(input$b_mu0*c(input$time[1]:input$time[2]))
       mut <- mu0 + Q01*(m1 - g01) + Q02*(m2 - g02) + Q11*(m1 - g01)^2 + 2*Q12*(m1 - g01)*(m2 - g02) + Q22*(m2 - g02)^2 + Q11*gamma11 + 2*Q12*gamma12 + Q22*gamma22
-      logmut <- log(mut)
+      
+      ifelse(sum(mut) == 0, logmut <- mut, logmut <- log(mut))
+      
       survt <- c()
       
       t1 <- input$time[1]
@@ -146,7 +164,11 @@ shinyServer(function(input, output, session) {
           survt <- c(survt, exp(-1*mut[i-t1+1]*dt))
       }
       
-      list(x=xx,y=yy,z=z,res=res, mut=mut, logmut=logmut, survt=survt, sigma_x=sigma_x, sigma_y=sigma_y)
+      
+      
+      res <- as.matrix(cbind(res, r2=r2)) 
+      class(res) <- "deSolve"
+      return(list(x=xx,y=yy,z=z,res=res, mut=mut, logmut=logmut, survt=survt, sigma_x=sigma_x, sigma_y=sigma_y))
       
   })
   
@@ -166,11 +188,11 @@ shinyServer(function(input, output, session) {
   }
   
   PlotDensity <- function(print.title=TRUE){
-    res <- data()
-    persp(x=res$x, y=res$y, z=res$z, phi = 45, theta = 30, ticktype="detailed",
+      res <- data()
+      persp(x=res$x, y=res$y, z=res$z, phi = 45, theta = 30, ticktype="detailed",
           xlab="x", ylab="y", zlab="z", axes=T)
-    if(print.title)
-        mtext(getPlotTitle(), side = 3, line = -4, outer = TRUE)
+      if(print.title)
+          mtext(getPlotTitle(), side = 3, line = -4, outer = TRUE)
   }
 
   
@@ -218,9 +240,7 @@ shinyServer(function(input, output, session) {
     
     ifelse(xmax > ymax, ymax<-xmax, xmax<-ymax)
     ifelse(xmin < ymin, ymin<-xmin, xmin<-ymin)
-    
     contour(x=x[xmin:xmax], y=y[ymin:ymax], z=res$z[xmin:xmax,ymin:ymax], col="red", labcex=1, lwd=2)
-    
     
     if(print.title)
         mtext(getPlotTitle(), side = 3, line = -4, outer = TRUE)
@@ -230,7 +250,7 @@ shinyServer(function(input, output, session) {
     res <- data()
     par(mfrow=c(2,1))
     plot(x=input$time[1]:input$time[2], y=res$logmut, cex.axis=1.5, cex.main=2, cex.lab=1.5, col="red", lwd=2, xlab="t", ylab="ln(mu)", type="l")
-    plot(x=input$time[1]:input$time[2], y=res$surv, cex.axis=1.5, cex.main=2, cex.lab=1.5, col="blue", lwd=2, xlab="t", ylab="S", type="l")
+    plot(x=input$time[1]:input$time[2], y=res$survt, cex.axis=1.5, cex.main=2, cex.lab=1.5, col="blue", lwd=2, xlab="t", ylab="S", type="l")
     if(print.title)
       mtext(getPlotTitle(), side = 3, line = -4, outer = TRUE)
   }
